@@ -1786,6 +1786,15 @@ string UCI::pv(const Position& pos, Depth depth, Value alpha, Value beta) {
 
       for (Move m : rootMoves[i].pv)
           ss << " " << UCI::move(m, pos.is_chess960());
+#if 1
+      if (!tb && i == PVIdx && elapsed > 3000)
+      {
+          std::cerr << ss.str() << std::endl;
+          ss << std::endl;
+      }
+      assert(tb || i != PVIdx || v >= beta  || elapsed <= 3000);
+      assert(tb || i != PVIdx || v <= alpha || elapsed <= 3000);
+#endif
   }
 
   return ss.str();
