@@ -34,6 +34,7 @@
 #include "timeman.h"
 #include "thread.h"
 #include "tt.h"
+#include "types.h"
 #include "uci.h"
 #include "syzygy/tbprobe.h"
 
@@ -260,10 +261,10 @@ namespace {
   EasyMoveManager EasyMove;
   Value DrawValue[COLOR_NB];
 
-  template <NodeType NT>
+  template <Variant V, NodeType NT>
   Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode, bool skipEarlyPruning);
 
-  template <NodeType NT, bool InCheck>
+  template <Variant V, NodeType NT, bool InCheck>
   Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth = DEPTH_ZERO);
 
   Value value_to_tt(Value v, int ply);
@@ -572,7 +573,56 @@ void Thread::search() {
           // high/low anymore.
           while (true)
           {
-              bestValue = ::search<PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+              switch (rootPos.variant())
+              {
+#ifdef ANTI
+              case ANTI_VARIANT:
+                  bestValue = ::search<ANTI_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef ATOMIC
+              case ATOMIC_VARIANT:
+                  bestValue = ::search<ATOMIC_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef CRAZYHOUSE
+              case CRAZYHOUSE_VARIANT:
+                  bestValue = ::search<CRAZYHOUSE_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef HORDE
+              case HORDE_VARIANT:
+                  bestValue = ::search<HORDE_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef KOTH
+              case KOTH_VARIANT:
+                  bestValue = ::search<KOTH_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef LOSERS
+              case LOSERS_VARIANT:
+                  bestValue = ::search<LOSERS_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef RACE
+              case RACE_VARIANT:
+                  bestValue = ::search<RACE_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef RELAY
+              case RELAY_VARIANT:
+                  bestValue = ::search<RELAY_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+#ifdef THREECHECK
+              case THREECHECK_VARIANT:
+                  bestValue = ::search<THREECHECK_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+                  break;
+#endif
+              default:
+                  bestValue = ::search<CHESS_VARIANT, PV>(rootPos, ss, alpha, beta, rootDepth, false, false);
+              }
 
               // Bring the best move to the front. It is critical that sorting
               // is done with a stable algorithm because all the values but the
@@ -707,9 +757,9 @@ void Thread::search() {
 
 namespace {
 
-  // search<>() is the main search function for both PV and non-PV nodes
+  // search<V, >() is the main search function for both PV and non-PV nodes
 
-  template <NodeType NT>
+  template <Variant V, NodeType NT>
   Value search(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth, bool cutNode, bool skipEarlyPruning) {
 
     const bool PvNode = NT == PV;
@@ -770,7 +820,7 @@ namespace {
 
         // Step 2. Check for aborted search and immediate draw
         if (Signals.stop.load(std::memory_order_relaxed) || pos.is_draw(ss->ply) || ss->ply >= MAX_PLY)
-            return ss->ply >= MAX_PLY && !inCheck ? evaluate(pos)
+            return ss->ply >= MAX_PLY && !inCheck ? evaluate<V>(pos)
                                                   : DrawValue[pos.side_to_move()];
 
         // Step 3. Mate distance pruning. Even if we mate at the next move our score
@@ -835,22 +885,22 @@ namespace {
 
     // Step 4a. Tablebase probe
 #ifdef KOTH
-    if (pos.is_koth()) {} else
+    if (V == KOTH_VARIANT) {} else
 #endif
 #ifdef LOSERS
-    if (pos.is_losers()) {} else
+    if (V == LOSERS_VARIANT) {} else
 #endif
 #ifdef RACE
-    if (pos.is_race()) {} else
+    if (V == RACE_VARIANT) {} else
 #endif
 #ifdef THREECHECK
-    if (pos.is_three_check()) {} else
+    if (V == THREECHECK_VARIANT) {} else
 #endif
 #ifdef HORDE
-    if (pos.is_horde()) {} else
+    if (V == HORDE_VARIANT) {} else
 #endif
 #ifdef CRAZYHOUSE
-    if (pos.is_house()) {} else
+    if (V == CRAZYHOUSE_VARIANT) {} else
 #endif
     if (!rootNode && TB::Cardinality)
     {
@@ -894,7 +944,7 @@ namespace {
     {
         // Never assume anything on values stored in TT
         if ((ss->staticEval = eval = tte->eval()) == VALUE_NONE)
-            eval = ss->staticEval = evaluate(pos);
+            eval = ss->staticEval = evaluate<V>(pos);
 
         // Can ttValue be used as a better position evaluation?
         if (ttValue != VALUE_NONE)
@@ -904,18 +954,18 @@ namespace {
     else
     {
         eval = ss->staticEval =
-        (ss-1)->currentMove != MOVE_NULL ? evaluate(pos)
+        (ss-1)->currentMove != MOVE_NULL ? evaluate<V>(pos)
                                          : -(ss-1)->staticEval + 2 * Eval::Tempo[pos.variant()];
 
         tte->save(posKey, VALUE_NONE, BOUND_NONE, DEPTH_NONE, MOVE_NONE,
                   ss->staticEval, TT.generation());
     }
 #ifdef ANTI
-    if (pos.is_anti() && pos.can_capture())
+    if (V == ANTI_VARIANT && pos.can_capture())
         goto moves_loop;
 #endif
 #ifdef LOSERS
-    if (pos.is_losers() && pos.can_capture_losers())
+    if (V == LOSERS_VARIANT && pos.can_capture_losers())
         goto moves_loop;
 #endif
 
@@ -928,10 +978,10 @@ namespace {
         &&  eval + razor_margin[pos.variant()][depth / ONE_PLY] <= alpha)
     {
         if (depth <= ONE_PLY)
-            return qsearch<NonPV, false>(pos, ss, alpha, alpha+1);
+            return qsearch<V, NonPV, false>(pos, ss, alpha, alpha+1);
 
         Value ralpha = alpha - razor_margin[pos.variant()][depth / ONE_PLY];
-        Value v = qsearch<NonPV, false>(pos, ss, ralpha, ralpha+1);
+        Value v = qsearch<V, NonPV, false>(pos, ss, ralpha, ralpha+1);
         if (v <= ralpha)
             return v;
     }
@@ -942,7 +992,7 @@ namespace {
         &&  eval - futility_margin(pos.variant(), depth) >= beta
         &&  eval < VALUE_KNOWN_WIN  // Do not return unproven wins
 #ifdef HORDE
-        &&  (pos.non_pawn_material(pos.side_to_move()) || pos.is_horde()))
+        &&  (pos.non_pawn_material(pos.side_to_move()) || V == HORDE_VARIANT))
 #else
         &&  pos.non_pawn_material(pos.side_to_move()))
 #endif
@@ -950,14 +1000,14 @@ namespace {
 
     // Step 8. Null move search with verification search (is omitted in PV nodes)
 #ifdef HORDE
-    if (pos.is_horde()) {} else
+    if (V == HORDE_VARIANT) {} else
 #endif
     if (   !PvNode
         &&  eval >= beta
         && (ss->staticEval >= beta - 35 * (depth / ONE_PLY - 6) || depth >= 13 * ONE_PLY)
 #ifdef CRAZYHOUSE
         // Do not bother with null-move search if opponent can drop pieces
-        && (!pos.is_house() || (eval < 2 * VALUE_KNOWN_WIN
+        && (V != CRAZYHOUSE_VARIANT || (eval < 2 * VALUE_KNOWN_WIN
             && !(depth > 4 * ONE_PLY && pos.count_in_hand(~pos.side_to_move(), ALL_PIECES))))
 #endif
         &&  pos.non_pawn_material(pos.side_to_move()))
@@ -972,8 +1022,8 @@ namespace {
         ss->counterMoves = &thisThread->counterMoveHistory[NO_PIECE][0];
 
         pos.do_null_move(st);
-        Value nullValue = depth-R < ONE_PLY ? -qsearch<NonPV, false>(pos, ss+1, -beta, -beta+1)
-                                            : - search<NonPV>(pos, ss+1, -beta, -beta+1, depth-R, !cutNode, true);
+        Value nullValue = depth-R < ONE_PLY ? -qsearch<V, NonPV, false>(pos, ss+1, -beta, -beta+1)
+                                            : - search<V, NonPV>(pos, ss+1, -beta, -beta+1, depth-R, !cutNode, true);
         pos.undo_null_move();
 
         if (nullValue >= beta)
@@ -986,8 +1036,8 @@ namespace {
                 return nullValue;
 
             // Do verification search at high depths
-            Value v = depth-R < ONE_PLY ? qsearch<NonPV, false>(pos, ss, beta-1, beta)
-                                        :  search<NonPV>(pos, ss, beta-1, beta, depth-R, false, true);
+            Value v = depth-R < ONE_PLY ? qsearch<V, NonPV, false>(pos, ss, beta-1, beta)
+                                        :  search<V, NonPV>(pos, ss, beta-1, beta, depth-R, false, true);
 
             if (v >= beta)
                 return nullValue;
@@ -998,7 +1048,7 @@ namespace {
     // If we have a good enough capture and a reduced search returns a value
     // much above beta, we can (almost) safely prune the previous move.
 #ifdef ANTI
-    if (pos.is_anti()) {} else
+    if (V == ANTI_VARIANT) {} else
 #endif
     if (   !PvNode
         &&  depth >= 5 * ONE_PLY
@@ -1019,7 +1069,7 @@ namespace {
                 ss->counterMoves = &thisThread->counterMoveHistory[pos.moved_piece(move)][to_sq(move)];
 
                 pos.do_move(move, st);
-                value = -search<NonPV>(pos, ss+1, -rbeta, -rbeta+1, rdepth, !cutNode, false);
+                value = -search<V, NonPV>(pos, ss+1, -rbeta, -rbeta+1, rdepth, !cutNode, false);
                 pos.undo_move(move);
                 if (value >= rbeta)
                     return value;
@@ -1032,7 +1082,7 @@ namespace {
         && (PvNode || ss->staticEval + 256 >= beta))
     {
         Depth d = (3 * depth / (4 * ONE_PLY) - 2) * ONE_PLY;
-        search<NT>(pos, ss, alpha, beta, d, cutNode, true);
+        search<V, NT>(pos, ss, alpha, beta, d, cutNode, true);
 
         tte = TT.probe(posKey, ttHit);
         ttMove = ttHit ? tte->move() : MOVE_NONE;
@@ -1095,10 +1145,10 @@ moves_loop: // When in check search starts from here
 
       givesCheck =  type_of(move) == NORMAL && !pos.discovered_check_candidates()
 #ifdef ATOMIC
-                  && !pos.is_atomic()
+                  && V != ATOMIC_VARIANT
 #endif
 #ifdef ANTI
-                  && !pos.is_anti()
+                  && V != ANTI_VARIANT
 #endif
                   ? pos.check_squares(type_of(pos.piece_on(from_sq(move)))) & to_sq(move)
                   : pos.gives_check(move);
@@ -1113,7 +1163,7 @@ moves_loop: // When in check search starts from here
           &&  pos.see_ge(move, VALUE_ZERO))
           extension = ONE_PLY;
 #ifdef ANTI
-      if (    pos.is_anti()
+      if (    V == ANTI_VARIANT
           && !moveCountPruning
           && pos.capture(move)
           && MoveList<LEGAL>(pos).size() == 1)
@@ -1133,7 +1183,7 @@ moves_loop: // When in check search starts from here
           Value rBeta = std::max(ttValue - 2 * depth / ONE_PLY, -VALUE_MATE);
           Depth d = (depth / (2 * ONE_PLY)) * ONE_PLY;
           ss->excludedMove = move;
-          value = search<NonPV>(pos, ss, rBeta - 1, rBeta, d, cutNode, true);
+          value = search<V, NonPV>(pos, ss, rBeta - 1, rBeta, d, cutNode, true);
           ss->excludedMove = MOVE_NONE;
 
           if (value < rBeta)
@@ -1145,7 +1195,7 @@ moves_loop: // When in check search starts from here
 
       // Step 13. Pruning at shallow depth
 #ifdef RACE
-      if (pos.is_race() && type_of(moved_piece) == KING && rank_of(to_sq(move)) > rank_of(from_sq(move))) {} else
+      if (V == RACE_VARIANT && type_of(moved_piece) == KING && rank_of(to_sq(move)) > rank_of(from_sq(move))) {} else
 #endif
       if (  !rootNode
           && bestValue > VALUE_MATED_IN_MAX_PLY)
@@ -1153,10 +1203,10 @@ moves_loop: // When in check search starts from here
           if (   !captureOrPromotion
               && !givesCheck
 #ifdef ANTI
-              && (!pos.is_anti() || !(pos.attackers_to(to_sq(move)) & pos.pieces(~pos.side_to_move())))
+              && (V != ANTI_VARIANT || !(pos.attackers_to(to_sq(move)) & pos.pieces(~pos.side_to_move())))
 #endif
 #ifdef HORDE
-              && (pos.is_horde() || !pos.advanced_pawn_push(move) || pos.non_pawn_material() >= 5000)
+              && (V == HORDE_VARIANT || !pos.advanced_pawn_push(move) || pos.non_pawn_material() >= 5000)
 #else
               && (!pos.advanced_pawn_push(move) || pos.non_pawn_material() >= 5000)
 #endif
@@ -1186,10 +1236,10 @@ moves_loop: // When in check search starts from here
 
               // Prune moves with negative SEE
 #ifdef ANTI
-              if (pos.is_anti()) {} else
+              if (V == ANTI_VARIANT) {} else
 #endif
 #ifdef RACE
-              if (pos.is_race()) {} else
+              if (V == RACE_VARIANT) {} else
 #endif
               if (   lmrDepth < 8
                   && !pos.see_ge(move, Value(-35 * lmrDepth * lmrDepth)))
@@ -1260,7 +1310,7 @@ moves_loop: // When in check search starts from here
 
           Depth d = std::max(newDepth - r, ONE_PLY);
 
-          value = -search<NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true, false);
+          value = -search<V, NonPV>(pos, ss+1, -(alpha+1), -alpha, d, true, false);
 
           doFullDepthSearch = (value > alpha && d != newDepth);
       }
@@ -1270,9 +1320,9 @@ moves_loop: // When in check search starts from here
       // Step 16. Full depth search when LMR is skipped or fails high
       if (doFullDepthSearch)
           value = newDepth <   ONE_PLY ?
-                            givesCheck ? -qsearch<NonPV,  true>(pos, ss+1, -(alpha+1), -alpha)
-                                       : -qsearch<NonPV, false>(pos, ss+1, -(alpha+1), -alpha)
-                                       : - search<NonPV>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode, false);
+                            givesCheck ? -qsearch<V, NonPV,  true>(pos, ss+1, -(alpha+1), -alpha)
+                                       : -qsearch<V, NonPV, false>(pos, ss+1, -(alpha+1), -alpha)
+                                       : - search<V, NonPV>(pos, ss+1, -(alpha+1), -alpha, newDepth, !cutNode, false);
 
       // For PV nodes only, do a full PV search on the first move or after a fail
       // high (in the latter case search only if value < beta), otherwise let the
@@ -1283,9 +1333,9 @@ moves_loop: // When in check search starts from here
           (ss+1)->pv[0] = MOVE_NONE;
 
           value = newDepth <   ONE_PLY ?
-                            givesCheck ? -qsearch<PV,  true>(pos, ss+1, -beta, -alpha)
-                                       : -qsearch<PV, false>(pos, ss+1, -beta, -alpha)
-                                       : - search<PV>(pos, ss+1, -beta, -alpha, newDepth, false, false);
+                            givesCheck ? -qsearch<V, PV,  true>(pos, ss+1, -beta, -alpha)
+                                       : -qsearch<V, PV, false>(pos, ss+1, -beta, -alpha)
+                                       : - search<V, PV>(pos, ss+1, -beta, -alpha, newDepth, false, false);
       }
 
       // Step 17. Undo move
@@ -1407,13 +1457,13 @@ moves_loop: // When in check search starts from here
   // qsearch() is the quiescence search function, which is called by the main
   // search function with depth zero, or recursively with depth less than ONE_PLY.
 
-  template <NodeType NT, bool InCheck>
+  template <Variant V, NodeType NT, bool InCheck>
   Value qsearch(Position& pos, Stack* ss, Value alpha, Value beta, Depth depth) {
 
     const bool PvNode = NT == PV;
 
 #ifdef ATOMIC
-    assert((pos.is_atomic() && pos.is_atomic_loss()) || InCheck == !!pos.checkers());
+    assert((V == ATOMIC_VARIANT && pos.is_atomic_loss()) || InCheck == !!pos.checkers());
 #else
     assert(InCheck == !!pos.checkers());
 #endif
@@ -1446,7 +1496,7 @@ moves_loop: // When in check search starts from here
 
     // Check for an instant draw or if the maximum ply has been reached
     if (pos.is_draw(ss->ply) || ss->ply >= MAX_PLY)
-        return ss->ply >= MAX_PLY && !InCheck ? evaluate(pos)
+        return ss->ply >= MAX_PLY && !InCheck ? evaluate<V>(pos)
                                               : DrawValue[pos.side_to_move()];
 
     assert(0 <= ss->ply && ss->ply < MAX_PLY);
@@ -1483,7 +1533,7 @@ moves_loop: // When in check search starts from here
         {
             // Never assume anything on values stored in TT
             if ((ss->staticEval = bestValue = tte->eval()) == VALUE_NONE)
-                ss->staticEval = bestValue = evaluate(pos);
+                ss->staticEval = bestValue = evaluate<V>(pos);
 
             // Can ttValue be used as a better position evaluation?
             if (ttValue != VALUE_NONE)
@@ -1492,7 +1542,7 @@ moves_loop: // When in check search starts from here
         }
         else
             ss->staticEval = bestValue =
-            (ss-1)->currentMove != MOVE_NULL ? evaluate(pos)
+            (ss-1)->currentMove != MOVE_NULL ? evaluate<V>(pos)
                                              : -(ss-1)->staticEval + 2 * Eval::Tempo[pos.variant()];
 
         // Stand pat. Return immediately if static value is at least beta
@@ -1523,16 +1573,16 @@ moves_loop: // When in check search starts from here
       assert(is_ok(move));
 
 #ifdef RACE
-      if (pos.is_race())
+      if (V == RACE_VARIANT)
           givesCheck = type_of(pos.piece_on(from_sq(move))) == KING && rank_of(to_sq(move)) == RANK_8;
       else
 #endif
       givesCheck =  type_of(move) == NORMAL && !pos.discovered_check_candidates()
 #ifdef ATOMIC
-                  && !pos.is_atomic()
+                  && V != ATOMIC_VARIANT
 #endif
 #ifdef ANTI
-                  && !pos.is_anti()
+                  && V != ANTI_VARIANT
 #endif
                   ? pos.check_squares(type_of(pos.piece_on(from_sq(move)))) & to_sq(move)
                   : pos.gives_check(move);
@@ -1546,12 +1596,12 @@ moves_loop: // When in check search starts from here
           assert(type_of(move) != ENPASSANT); // Due to !pos.advanced_pawn_push
 
 #ifdef ATOMIC
-          if (pos.is_atomic())
+          if (V == ATOMIC_VARIANT)
               futilityValue = futilityBase + pos.see<ATOMIC_VARIANT>(move);
           else
 #endif
 #ifdef CRAZYHOUSE
-          if (pos.is_house())
+          if (V == CRAZYHOUSE_VARIANT)
               futilityValue = futilityBase + 2 * PieceValue[pos.variant()][EG][pos.piece_on(to_sq(move))];
           else
 #endif
@@ -1592,8 +1642,8 @@ moves_loop: // When in check search starts from here
 
       // Make and search the move
       pos.do_move(move, st, givesCheck);
-      value = givesCheck ? -qsearch<NT,  true>(pos, ss+1, -beta, -alpha, depth - ONE_PLY)
-                         : -qsearch<NT, false>(pos, ss+1, -beta, -alpha, depth - ONE_PLY);
+      value = givesCheck ? -qsearch<V, NT,  true>(pos, ss+1, -beta, -alpha, depth - ONE_PLY)
+                         : -qsearch<V, NT, false>(pos, ss+1, -beta, -alpha, depth - ONE_PLY);
       pos.undo_move(move);
 
       assert(value > -VALUE_INFINITE);
