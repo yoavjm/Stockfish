@@ -90,6 +90,7 @@ typedef Stats<CounterMoveStats> CounterMoveHistoryStats;
 /// to get a cut-off first.
 namespace Search { struct Stack; }
 
+template<Variant V>
 class MovePicker {
 public:
   MovePicker(const MovePicker&) = delete;

@@ -130,8 +130,8 @@ public:
   Bitboard slider_blockers(Bitboard sliders, Square s, Bitboard& pinners) const;
 
   // Properties of moves
-  bool legal(Move m) const;
-  bool pseudo_legal(const Move m) const;
+  template<Variant V> bool legal(Move m) const;
+  template<Variant V> bool pseudo_legal(const Move m) const;
   bool capture(Move m) const;
   bool capture_or_promotion(Move m) const;
   bool gives_check(Move m) const;
@@ -238,7 +238,7 @@ public:
 #endif
   Thread* this_thread() const;
   uint64_t nodes_searched() const;
-  bool is_draw(int ply) const;
+  template<Variant V> bool is_draw(int ply) const;
   int rule50_count() const;
   Score psq_score() const;
   Value non_pawn_material(Color c) const;

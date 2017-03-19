@@ -1063,7 +1063,7 @@ namespace {
         MovePicker mp(pos, ttMove, rbeta - ss->staticEval);
 
         while ((move = mp.next_move()) != MOVE_NONE)
-            if (pos.legal(move))
+            if (pos.legal<V>(move))
             {
                 ss->currentMove = move;
                 ss->counterMoves = &thisThread->counterMoveHistory[pos.moved_piece(move)][to_sq(move)];
@@ -1166,7 +1166,7 @@ moves_loop: // When in check search starts from here
       if (    V == ANTI_VARIANT
           && !moveCountPruning
           && pos.capture(move)
-          && MoveList<LEGAL>(pos).size() == 1)
+          && MoveList<V, LEGAL>(pos).size() == 1)
           extension = ONE_PLY;
 #endif
 
@@ -1178,7 +1178,7 @@ moves_loop: // When in check search starts from here
       if (    singularExtensionNode
           &&  move == ttMove
           && !extension
-          &&  pos.legal(move))
+          &&  pos.legal<V>(move))
       {
           Value rBeta = std::max(ttValue - 2 * depth / ONE_PLY, -VALUE_MATE);
           Depth d = (depth / (2 * ONE_PLY)) * ONE_PLY;
@@ -1255,7 +1255,7 @@ moves_loop: // When in check search starts from here
       prefetch(TT.first_entry(pos.key_after(move)));
 
       // Check for legality just before making the move
-      if (!rootNode && !pos.legal(move))
+      if (!rootNode && !pos.legal<V>(move))
       {
           ss->moveCount = --moveCount;
           continue;
@@ -1635,7 +1635,7 @@ moves_loop: // When in check search starts from here
       prefetch(TT.first_entry(pos.key_after(move)));
 
       // Check for legality just before making the move
-      if (!pos.legal(move))
+      if (!pos.legal<V>(move))
           continue;
 
       ss->currentMove = move;
@@ -1891,6 +1891,7 @@ string UCI::pv(const Position& pos, Depth depth, Value alpha, Value beta) {
 /// fail high at root. We try hard to have a ponder move to return to the GUI,
 /// otherwise in case of 'ponder on' we have nothing to think on.
 
+template<Variant V>
 bool RootMove::extract_ponder_from_tt(Position& pos) {
 
     StateInfo st;
@@ -1909,7 +1910,7 @@ bool RootMove::extract_ponder_from_tt(Position& pos) {
     if (ttHit)
     {
         Move m = tte->move(); // Local copy to be SMP safe
-        if (MoveList<LEGAL>(pos).contains(m))
+        if (MoveList<V, LEGAL>(pos).contains(m))
             pv.push_back(m);
     }
 

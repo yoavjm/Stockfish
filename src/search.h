@@ -59,7 +59,7 @@ struct RootMove {
 
   bool operator<(const RootMove& m) const { return m.score < score; } // Descending sort
   bool operator==(const Move& m) const { return pv[0] == m; }
-  bool extract_ponder_from_tt(Position& pos);
+  template<Variant V> bool extract_ponder_from_tt(Position& pos);
 
   Value score = -VALUE_INFINITE;
   Value previousScore = -VALUE_INFINITE;

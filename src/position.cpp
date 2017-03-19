@@ -779,6 +779,7 @@ Bitboard Position::attackers_to(Square s, Bitboard occupied) const {
 
 /// Position::legal() tests whether a pseudo-legal move is legal
 
+template<Variant V>
 bool Position::legal(Move m) const {
 
   assert(is_ok(m));
@@ -898,6 +899,7 @@ bool Position::legal(Move m) const {
 /// pseudo legal. It is used to validate moves from TT that can be corrupted
 /// due to SMP concurrent access or hash position key aliasing.
 
+template<Variant V>
 bool Position::pseudo_legal(const Move m) const {
 
   Color us = sideToMove;
@@ -956,7 +958,7 @@ bool Position::pseudo_legal(const Move m) const {
 #else
   if (type_of(m) != NORMAL)
 #endif
-      return MoveList<LEGAL>(*this).contains(m);
+      return MoveList<V, LEGAL>(*this).contains(m);
 
   // Is not a promotion, so promotion piece must be empty
 #ifdef CRAZYHOUSE
@@ -1897,9 +1899,10 @@ bool Position::see_ge(Move m, Value v) const {
 /// Position::is_draw() tests whether the position is drawn by 50-move rule
 /// or by repetition. It does not detect stalemates.
 
+template<Variant V>
 bool Position::is_draw(int ply) const {
 
-  if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
+  if (st->rule50 > 99 && (!checkers() || MoveList<V, LEGAL>(*this).size()))
       return true;
 
 #ifdef CRAZYHOUSE

@@ -1766,7 +1766,7 @@ T result_to_score(Value value) {
         return T(WDLDraw);
 }
 
-template<typename E, typename T = typename Ret<E>::type>
+template<Variant V, typename E, typename T = typename Ret<E>::type>
 T probe_table(const Position& pos, ProbeState* result, WDLScore wdl = WDLDraw) {
 
     // Check for variant end
@@ -1774,7 +1774,7 @@ T probe_table(const Position& pos, ProbeState* result, WDLScore wdl = WDLDraw) {
         return result_to_score<T>(pos.variant_result());
 
     // Check for checkmate and stalemate in variants
-    if (pos.variant() != CHESS_VARIANT && MoveList<LEGAL>(pos).size() == 0)
+    if (pos.variant() != CHESS_VARIANT && MoveList<V, LEGAL>(pos).size() == 0)
         return result_to_score<T>(pos.checkers() ? pos.checkmate_value() : pos.stalemate_value());
 
 #ifdef ANTI
@@ -1797,7 +1797,7 @@ WDLScore sprobe_ab(Position &pos, WDLScore alpha, WDLScore beta, ProbeState* res
 
 WDLScore sprobe_captures(Position &pos, WDLScore alpha, WDLScore beta, ProbeState* result) {
 
-    auto moveList = MoveList<CAPTURES>(pos);
+    auto moveList = MoveList<ANTI_VARIANT, CAPTURES>(pos);
     StateInfo st;
 
     *result = OK;
@@ -1834,7 +1834,7 @@ WDLScore sprobe_ab(Position &pos, WDLScore alpha, WDLScore beta, ProbeState* res
         if (*result == ZEROING_BEST_MOVE || *result == FAIL)
             return v;
     } else {
-        auto moveList = MoveList<CAPTURES>(pos);
+        auto moveList = MoveList<ANTI_VARIANT, CAPTURES>(pos);
         if (moveList.size()) {
             *result = ZEROING_BEST_MOVE;
             return WDLLoss;
@@ -1843,7 +1843,7 @@ WDLScore sprobe_ab(Position &pos, WDLScore alpha, WDLScore beta, ProbeState* res
 
     if (Threats || popcount(pos.pieces()) >= 6) {
         StateInfo st;
-        auto moveList = MoveList<LEGAL>(pos);
+        auto moveList = MoveList<ANTI_VARIANT, LEGAL>(pos);
 
         for (const Move& move : moveList) {
             pos.do_move(move, st);
@@ -1892,7 +1892,7 @@ WDLScore sprobe_ab(Position &pos, WDLScore alpha, WDLScore beta, ProbeState* res
 // (winning capture or winning pawn move). Also DTZ store wrong values for positions
 // where the best move is an ep-move (even if losing). So in all these cases set
 // the state to ZEROING_BEST_MOVE.
-template<bool CheckZeroingMoves = false>
+template<Variant V, bool CheckZeroingMoves = false>
 WDLScore search(Position& pos, ProbeState* result) {
 
 #ifdef ANTI
@@ -1903,7 +1903,7 @@ WDLScore search(Position& pos, ProbeState* result) {
     WDLScore value, bestValue = WDLLoss;
     StateInfo st;
 
-    auto moveList = MoveList<LEGAL>(pos);
+    auto moveList = MoveList<V, LEGAL>(pos);
     size_t totalCount = moveList.size(), moveCount = 0;
 
     for (const Move& move : moveList)
@@ -2186,6 +2186,7 @@ WDLScore Tablebases::probe_wdl(Position& pos, ProbeState* result) {
 //
 // In short, if a move is available resulting in dtz + 50-move-counter <= 99,
 // then do not accept moves leading to dtz + 50-move-counter == 100.
+template<Variant V>
 int Tablebases::probe_dtz(Position& pos, ProbeState* result) {
 
     *result = OK;
@@ -2220,7 +2221,7 @@ int Tablebases::probe_dtz(Position& pos, ProbeState* result) {
     StateInfo st;
     int minDTZ = 0xFFFF;
 
-    for (const Move& move : MoveList<LEGAL>(pos))
+    for (const Move& move : MoveList<V, LEGAL>(pos))
     {
         bool zeroing = pos.capture(move) || type_of(pos.moved_piece(move)) == PAWN;
 
@@ -2285,6 +2286,7 @@ static int has_repeated(StateInfo *st)
 //
 // A return value false indicates that not all probes were successful and that
 // no moves were filtered out.
+template<Variant V>
 bool Tablebases::root_probe(Position& pos, Search::RootMoves& rootMoves, Value& score)
 {
 #ifdef KOTH
@@ -2323,7 +2325,7 @@ bool Tablebases::root_probe(Position& pos, Search::RootMoves& rootMoves, Value& 
         if (pos.checkers() && dtz > 0) {
             ExtMove s[MAX_MOVES];
 
-            if (generate<LEGAL>(pos, s) == s)
+            if (generate<V, LEGAL>(pos, s) == s)
                 v = 1;
         }
 

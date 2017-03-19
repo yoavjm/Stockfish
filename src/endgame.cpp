@@ -141,7 +141,7 @@ Value Endgame<CHESS_VARIANT, KXK>::operator()(const Position& pos) const {
   assert(!pos.checkers()); // Eval is never called when in check
 
   // Stalemate detection with lone king
-  if (pos.side_to_move() == weakSide && !MoveList<LEGAL>(pos).size())
+  if (pos.side_to_move() == weakSide && !MoveList<CHESS_VARIANT, LEGAL>(pos).size())
       return VALUE_DRAW;
 
   Square winnerKSq = pos.square<KING>(strongSide);
@@ -924,7 +924,7 @@ Value Endgame<ATOMIC_VARIANT, KXK>::operator()(const Position& pos) const {
   assert(!pos.checkers()); // Eval is never called when in check
 
   // Stalemate detection with lone king
-  if (pos.side_to_move() == weakSide && !MoveList<LEGAL>(pos).size())
+  if (pos.side_to_move() == weakSide && !MoveList<ATOMIC_VARIANT, LEGAL>(pos).size())
       return VALUE_DRAW;
 
   Square winnerKSq = pos.square<KING>(strongSide);
@@ -975,7 +975,7 @@ Value Endgame<ATOMIC_VARIANT, KQK>::operator()(const Position& pos) const {
   assert(!pos.checkers()); // Eval is never called when in check
 
   // Stalemate detection with lone king
-  if (pos.side_to_move() == weakSide && !MoveList<LEGAL>(pos).size())
+  if (pos.side_to_move() == weakSide && !MoveList<ATOMIC_VARIANT, LEGAL>(pos).size())
       return VALUE_DRAW;
 
   Square winnerKSq = pos.square<KING>(strongSide);
