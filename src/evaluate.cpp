@@ -673,6 +673,11 @@ namespace {
     b = attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
     attackedBy[Us][PAWN] = pe->pawn_attacks(Us);
 
+#ifdef ATOMIC
+    if (pos.is_atomic())
+        attackedBy2[Us] = 0;
+    else
+#endif
     attackedBy2[Us]            = b & attackedBy[Us][PAWN];
     attackedBy[Us][ALL_PIECES] = b | attackedBy[Us][PAWN];
 
@@ -723,6 +728,11 @@ namespace {
           : Pt ==   ROOK ? attacks_bb<  ROOK>(s, pos.pieces() ^ pos.pieces(Us, ROOK, QUEEN))
                          : pos.attacks_from<Pt>(s);
 
+#ifdef ATOMIC
+        if (pos.is_atomic())
+            b &= ~(attackedBy[Us][KING] | pos.square<KING>(Us));
+        else
+#endif
         if (pos.pinned_pieces(Us) & s)
             b &= LineBB[pos.square<KING>(Us)][s];
 
@@ -903,11 +913,11 @@ namespace {
 
         // Analyse the safe enemy's checks which are possible on next move
         safe  = ~pos.pieces(Them);
-        safe &= ~attackedBy[Us][ALL_PIECES] | (kingOnlyDefended & attackedBy2[Them]);
 #ifdef ATOMIC
         if (pos.is_atomic())
             safe |= attackedBy[Us][KING];
 #endif
+        safe &= ~attackedBy[Us][ALL_PIECES] | (kingOnlyDefended & attackedBy2[Them]);
 
         b1 = pos.attacks_from<  ROOK>(ksq);
         b2 = pos.attacks_from<BISHOP>(ksq);
@@ -1299,7 +1309,12 @@ namespace {
 #endif
 #ifdef ATOMIC
             if (pos.is_atomic())
-                ebonus +=  distance(pos.square<KING>(Them), blockSq) * 5 * rr;
+            {
+                if (relative_rank(Us, blockSq) >= relative_rank(Us, pos.square<KING>(Them)))
+                    ebonus += distance(pos.square<KING>(Them), blockSq) * 10 * rr;
+                else
+                    ebonus += distance(pos.square<KING>(Them), blockSq) * 5 * rr;
+            }
             else
 #endif
             {
