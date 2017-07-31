@@ -1251,8 +1251,11 @@ moves_loop: // When in check search starts from here
           Depth r = reduction<PvNode>(improving, depth, moveCount);
 
 #ifdef ANTI
-          if (pos.is_anti() && pos.can_capture())
-              r -= r ? ONE_PLY : DEPTH_ZERO;
+          if (pos.is_anti())
+          {
+              if (pos.can_capture())
+                  r -= r ? ONE_PLY : DEPTH_ZERO;
+          }
           else
 #endif
 #ifdef CRAZYHOUSE
