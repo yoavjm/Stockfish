@@ -1629,8 +1629,8 @@ namespace {
     if (pos.is_atomic())
     {
         // Endgame with one bishop and no other pieces (ignoring pawns)
-        // is a fortress draw if none of the weaker sides' pawns is on the bishop's color.
-        if (    pos.non_pawn_material() == BishopValueMg
+        // is a fortress draw if none of the weaker side's pawns are on the bishop's color.
+        if (    pos.non_pawn_material(strongSide) == BishopValueMg
             && !pe->pawn_asymmetry()
             && !pe->pawns_on_same_color_squares(~strongSide, pos.square<BISHOP>(strongSide)))
             return SCALE_FACTOR_DRAW;
