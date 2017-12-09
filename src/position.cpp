@@ -1319,6 +1319,11 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       }
       else
       {
+#ifdef TWOKINGS
+          if (is_two_kings() && type_of(captured) == KING)
+              st->nonPawnMaterial[them] -= PieceValue[TWOKINGS_VARIANT][MG][captured];
+          else
+#endif
           st->nonPawnMaterial[them] -= PieceValue[CHESS_VARIANT][MG][captured];
 #ifdef CRAZYHOUSE
           if (is_house() && !is_promoted(to))
@@ -2058,14 +2063,6 @@ bool Position::is_draw(int ply) const {
 
 #ifdef CRAZYHOUSE
   if (is_house()) {} else
-#endif
-#ifdef TWOKINGS
-  if (is_two_kings())
-  {
-      if (st->rule50 > 199 && (!checkers() || MoveList<LEGAL>(*this).size()))
-          return true;
-  }
-  else
 #endif
   if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
       return true;

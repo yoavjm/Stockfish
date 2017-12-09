@@ -385,6 +385,9 @@ namespace {
 #ifdef ATOMIC
   Endgame<ATOMIC_VARIANT, KXK> EvaluateAtomicKXK[] = { Endgame<ATOMIC_VARIANT, KXK>(WHITE), Endgame<ATOMIC_VARIANT, KXK>(BLACK) };
 #endif
+#ifdef TWOKINGS
+  Endgame<TWOKINGS_VARIANT, KKKK> EvaluateTwoKingsKKKK[] = { Endgame<TWOKINGS_VARIANT, KKKK>(WHITE), Endgame<TWOKINGS_VARIANT, KKKK>(BLACK) };
+#endif
 
   Endgame<CHESS_VARIANT, KBPsK>  ScaleKBPsK[]  = { Endgame<CHESS_VARIANT, KBPsK>(WHITE),  Endgame<CHESS_VARIANT, KBPsK>(BLACK) };
   Endgame<CHESS_VARIANT, KQKRPs> ScaleKQKRPs[] = { Endgame<CHESS_VARIANT, KQKRPs>(WHITE), Endgame<CHESS_VARIANT, KQKRPs>(BLACK) };
@@ -401,6 +404,12 @@ namespace {
   bool is_KXK_atomic(const Position& pos, Color us) {
     return  !more_than_one(pos.pieces(~us))
           && pos.non_pawn_material(us) >= RookValueMg + KnightValueMg;
+  }
+#endif
+
+#ifdef TWOKINGS
+  bool is_KKKK_two_kings(const Position& pos, Color us) {
+    return pos.non_pawn_material(us) + pos.non_pawn_material(~us) == 2 * KingValueMgTwoKings;
   }
 #endif
 
@@ -537,6 +546,17 @@ Entry* probe(const Position& pos) {
           if (is_KXK_atomic(pos, c))
           {
               e->evaluationFunction = &EvaluateAtomicKXK[c];
+              return e;
+          }
+  }
+#endif
+#ifdef TWOKINGS
+  else if (pos.is_two_kings())
+  {
+      for (Color c = WHITE; c <= BLACK; ++c)
+          if (is_KKKK_two_kings(pos, c))
+          {
+              e->evaluationFunction = &EvaluateTwoKingsKKKK[c];
               return e;
           }
   }

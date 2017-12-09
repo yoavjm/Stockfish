@@ -122,7 +122,7 @@ Endgames::Endgames() {
   add<ATOMIC_VARIANT, KNNK>("KNNvK");
 #endif
 #ifdef TWOKINGS
-  add<TWOKINGS_VARIANT, KKKN>("KKvKN");
+  add<TWOKINGS_VARIANT, KKKK>("KKvKK");
 #endif
 }
 
@@ -1006,26 +1006,18 @@ template<> Value Endgame<ATOMIC_VARIANT, KNNK>::operator()(const Position&) cons
 #endif
 
 #ifdef TWOKINGS
-/// KK vs KN.  This is almost identical to KX vs K:  We give the attacking
-/// king a bonus for having the kings close together, and for forcing the
-/// defending king towards the edge. If we also take care to avoid null move for
-/// the defending side in the search, this is usually sufficient to win KK vs KN.
+/// KK vs KK. Both players attempt to centralize their kings.
 template<>
-Value Endgame<TWOKINGS_VARIANT, KKKN>::operator()(const Position& pos) const {
+Value Endgame<TWOKINGS_VARIANT, KKKK>::operator()(const Position& pos) const {
 
   assert(pos.variant() == TWOKINGS_VARIANT);
-  assert(verify_material(pos, strongSide, KingValueMgTwoKings, 0));
-  assert(verify_material(pos, weakSide, KnightValueMg, 0));
+  assert(pos.count<KING>() == 4);
 
-  Bitboard winnerKBB = pos.pieces(strongSide, KING);
-  Square loserKSq = pos.square<KING>(weakSide);
+  Color us = pos.side_to_move();
+  Square wksq = pos.royal_king( us), wcsq = pos.commoner_king( us);
+  Square bksq = pos.royal_king(~us), bcsq = pos.commoner_king(~us);
 
-  Value result =  KingValueEgTwoKings
-                - KnightValueEgTwoKings
-                + PushToEdges[loserKSq]
-                + PushClose[distance(msb(winnerKBB), loserKSq)] / 2
-                + PushClose[distance(lsb(winnerKBB), loserKSq)] / 2;
-
-  return strongSide == pos.side_to_move() ? result : -result;
+  return Value(  PushToEdges[bksq] + PushToEdges[bcsq]
+               - PushToEdges[wksq] - PushToEdges[wcsq]);
 }
 #endif

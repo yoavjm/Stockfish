@@ -48,7 +48,7 @@ enum EndgameCode {
   KNK,
 #endif
 #ifdef TWOKINGS
-  KKKN,
+  KKKK,
 #endif
   KNNK,  // KNN vs K
   KXK,   // Generic "mate lone king" eval
