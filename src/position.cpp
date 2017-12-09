@@ -2060,7 +2060,12 @@ bool Position::is_draw(int ply) const {
   if (is_house()) {} else
 #endif
 #ifdef TWOKINGS
-  if (is_two_kings()) {} else
+  if (is_two_kings())
+  {
+      if (st->rule50 > 199 && (!checkers() || MoveList<LEGAL>(*this).size()))
+          return true;
+  }
+  else
 #endif
   if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
       return true;

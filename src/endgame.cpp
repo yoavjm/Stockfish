@@ -1017,13 +1017,14 @@ Value Endgame<TWOKINGS_VARIANT, KKKN>::operator()(const Position& pos) const {
   assert(verify_material(pos, strongSide, KingValueMgTwoKings, 0));
   assert(verify_material(pos, weakSide, KnightValueMg, 0));
 
-  Square winnerKSq = pos.square<KING>(strongSide);
+  Bitboard winnerKBB = pos.pieces(strongSide, KING);
   Square loserKSq = pos.square<KING>(weakSide);
 
   Value result =  KingValueEgTwoKings
                 - KnightValueEgTwoKings
                 + PushToEdges[loserKSq]
-                + PushClose[distance(winnerKSq, loserKSq)];
+                + PushClose[distance(msb(winnerKBB), loserKSq)] / 2
+                + PushClose[distance(lsb(winnerKBB), loserKSq)] / 2;
 
   return strongSide == pos.side_to_move() ? result : -result;
 }
