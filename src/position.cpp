@@ -609,6 +609,10 @@ void Position::set_state(StateInfo* si) const {
   {
       if (type_of(pc) != PAWN && type_of(pc) != KING)
           si->nonPawnMaterial[color_of(pc)] += pieceCount[pc] * PieceValue[CHESS_VARIANT][MG][pc];
+#ifdef TWOKINGS
+      else if (is_two_kings() && type_of(pc) == KING)
+          si->nonPawnMaterial[color_of(pc)] += (pieceCount[pc] - 1) * PieceValue[TWOKINGS_VARIANT][MG][pc];
+#endif
 
       for (int cnt = 0; cnt < pieceCount[pc]; ++cnt)
           si->materialKey ^= Zobrist::psq[pc][cnt];
@@ -2054,6 +2058,9 @@ bool Position::is_draw(int ply) const {
 
 #ifdef CRAZYHOUSE
   if (is_house()) {} else
+#endif
+#ifdef TWOKINGS
+  if (is_two_kings()) {} else
 #endif
   if (st->rule50 > 99 && (!checkers() || MoveList<LEGAL>(*this).size()))
       return true;

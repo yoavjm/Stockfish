@@ -425,7 +425,7 @@ enum Value : int {
   BishopValueMgTwoKings = 840,   BishopValueEgTwoKings = 864,
   RookValueMgTwoKings   = 1269,  RookValueEgTwoKings   = 1329,
   QueenValueMgTwoKings  = 2432,  QueenValueEgTwoKings  = 2696,
-  KingValueMgTwoKings   = 520,   KingValueEgTwoKings   = 746,
+  KingValueMgTwoKings   = 900,   KingValueEgTwoKings   = 900,
 #endif
 
   MidgameLimit  = 15258, EndgameLimit  = 3915

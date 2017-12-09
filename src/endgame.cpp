@@ -121,6 +121,9 @@ Endgames::Endgames() {
   add<ATOMIC_VARIANT, KQK>("KQvK");
   add<ATOMIC_VARIANT, KNNK>("KNNvK");
 #endif
+#ifdef TWOKINGS
+  add<TWOKINGS_VARIANT, KKKN>("KKvKN");
+#endif
 }
 
 
@@ -1000,4 +1003,28 @@ Value Endgame<ATOMIC_VARIANT, KQK>::operator()(const Position& pos) const {
 }
 
 template<> Value Endgame<ATOMIC_VARIANT, KNNK>::operator()(const Position&) const { return VALUE_DRAW; }
+#endif
+
+#ifdef TWOKINGS
+/// KK vs KN.  This is almost identical to KX vs K:  We give the attacking
+/// king a bonus for having the kings close together, and for forcing the
+/// defending king towards the edge. If we also take care to avoid null move for
+/// the defending side in the search, this is usually sufficient to win KK vs KN.
+template<>
+Value Endgame<TWOKINGS_VARIANT, KKKN>::operator()(const Position& pos) const {
+
+  assert(pos.variant() == TWOKINGS_VARIANT);
+  assert(verify_material(pos, strongSide, KingValueMgTwoKings, 0));
+  assert(verify_material(pos, weakSide, KnightValueMg, 0));
+
+  Square winnerKSq = pos.square<KING>(strongSide);
+  Square loserKSq = pos.square<KING>(weakSide);
+
+  Value result =  KingValueEgTwoKings
+                - KnightValueEgTwoKings
+                + PushToEdges[loserKSq]
+                + PushClose[distance(winnerKSq, loserKSq)];
+
+  return strongSide == pos.side_to_move() ? result : -result;
+}
 #endif
