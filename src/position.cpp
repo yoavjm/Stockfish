@@ -649,6 +649,11 @@ void Position::set_state(StateInfo* si) const {
 
   for (Piece pc : Pieces)
   {
+#ifdef TWOKINGS
+      if (is_two_kings() && type_of(pc) == KING)
+          si->nonPawnMaterial[color_of(pc)] += (pieceCount[pc] - 1) * PieceValue[TWOKINGS_VARIANT][MG][pc];
+      else
+#endif
       if (type_of(pc) != PAWN && type_of(pc) != KING)
           si->nonPawnMaterial[color_of(pc)] += pieceCount[pc] * PieceValue[CHESS_VARIANT][MG][pc];
 
@@ -1359,6 +1364,11 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       }
       else
       {
+#ifdef TWOKINGS
+          if (is_two_kings() && type_of(captured) == KING)
+              st->nonPawnMaterial[them] -= PieceValue[TWOKINGS_VARIANT][MG][captured];
+          else
+#endif
           st->nonPawnMaterial[them] -= PieceValue[CHESS_VARIANT][MG][captured];
 #ifdef CRAZYHOUSE
           if (is_house() && !is_promoted(to))

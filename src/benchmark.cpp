@@ -260,8 +260,9 @@ const vector<string> Defaults[SUBVARIANT_NB] = {
 #ifdef TWOKINGS
   {
     "rnbqkknr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKKNR w KQkq - 0 1",
-    "r1b1kk1r/pp1ppppp/2N2n2/8/4P3/2N5/PPP2qPP/R1BQKK1R w KQkq - 0 7",
-    "rnbqk2r/ppppkppp/5n2/4p3/4P3/5N2/PPPPKPPP/RNBQK2R w KQ - 4 4"
+    "r1b1kk1r/pp1ppppp/2N2n2/8/4P3/2N5/PPP2qPP/R1BQKK1R w KQkq - 0 1",
+    "rnbqk2r/ppppkppp/5n2/4p3/4P3/5N2/PPPPKPPP/RNBQK2R w KQ - 0 1",
+    "k6k/8/3KK3/8/8/8/8/8 w - - 0 1"
   },
 #endif
 #ifdef SUICIDE
