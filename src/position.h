@@ -255,6 +255,7 @@ public:
 #endif
 #ifdef TWOKINGS
   bool is_two_kings() const;
+  Square commoner_king(Color c) const;
   Square royal_king(Color c) const;
   Square royal_king(Color c, Bitboard kings) const;
 #endif
@@ -451,6 +452,10 @@ inline CheckCount Position::checks_given(Color c) const {
 #ifdef TWOKINGS
 inline bool Position::is_two_kings() const {
   return var == TWOKINGS_VARIANT;
+}
+
+inline Square Position::commoner_king(Color c) const {
+  return lsb(pieces(c, KING) - royal_king(c, pieces(c, KING)));
 }
 
 inline Square Position::royal_king(Color c) const {

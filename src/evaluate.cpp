@@ -792,6 +792,10 @@ namespace {
     else
 #endif
     b = attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
+#ifdef TWOKINGS
+    if (pos.is_two_kings() && pos.count<KING>(Us) > 1)
+        b |= attackedBy[Us][KING] = pos.attacks_from<KING>(pos.commoner_king(Us));
+#endif
     attackedBy[Us][PAWN] = pe->pawn_attacks(Us);
 
     attackedBy2[Us]            = b & attackedBy[Us][PAWN];
@@ -1445,6 +1449,19 @@ namespace {
             if (pos.is_atomic())
                 ebonus +=  distance(pos.square<KING>(Them), blockSq) * 5 * rr;
             else
+#endif
+#ifdef TWOKINGS
+            if (pos.is_two_kings())
+            {
+                if (pos.count<KING>(Them) > 1)
+                    ebonus += distance(pos.commoner_king(Them), blockSq) * 5 * rr;
+                if (pos.count<KING>(Us) > 1)
+                {
+                    ebonus += distance(pos.commoner_king(Us), blockSq) * 5 * rr;
+                    if (relative_rank(Us, blockSq) != RANK_8)
+                        ebonus -= distance(pos.commoner_king(Us), blockSq + Up) * rr;
+                }
+            }
 #endif
             {
             // Adjust bonus based on the king's proximity
