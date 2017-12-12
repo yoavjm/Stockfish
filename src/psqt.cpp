@@ -914,5 +914,6 @@ for (Variant var = CHESS_VARIANT; var < VARIANT_NB; ++var)
 #endif
   }
 }
+TUNE(PieceValue[TWOKINGS_VARIANT][MG], PieceValue[TWOKINGS_VARIANT][EG], PSQT::init);
 
 } // namespace PSQT

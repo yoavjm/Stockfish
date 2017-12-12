@@ -31,7 +31,7 @@ namespace {
 
   // Polynomial material imbalance parameters
 
-  const int QuadraticOurs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
+  int QuadraticOurs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
     {
     //            OUR PIECES
     // pair pawn knight bishop rook queen
@@ -191,7 +191,7 @@ namespace {
   };
 #endif
 
-  const int QuadraticTheirs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
+  int QuadraticTheirs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
     {
     //           THEIR PIECES
     // pair pawn knight bishop rook queen
@@ -350,6 +350,7 @@ namespace {
       {  78,    3,  46,    37,   -26,  -1 }  // Queen
   };
 #endif
+TUNE(QuadraticOurs[TWOKINGS_VARIANT], QuadraticTheirs[TWOKINGS_VARIANT]);
 
   // Endgame evaluation and scaling functions are accessed directly and not through
   // the function maps because they correspond to more than one material hash key.
