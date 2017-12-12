@@ -814,6 +814,11 @@ namespace {
         {
             kingAttackersCount[Us]++;
             kingAttackersWeight[Us] += KingAttackWeights[pos.variant()][Pt];
+#ifdef TWOKINGS
+            if (pos.is_two_kings() && pos.count<KING>() > 1)
+                kingAttacksCount[Us] += popcount(b & pos.attacks_from<KING>(pos.square<KING>(Them)));
+            else
+#endif
             kingAttacksCount[Us] += popcount(b & attackedBy[Them][KING]);
         }
 
@@ -947,6 +952,13 @@ namespace {
         if (pos.is_atomic())
             weak =  (attackedBy[Them][ALL_PIECES] | (pos.pieces(Them) ^ pos.pieces(Them, KING)))
                   & (~attackedBy[Us][ALL_PIECES] | attackedBy[Us][KING] | (attackedBy[Us][QUEEN] & ~attackedBy2[Us]));
+        else
+#endif
+#ifdef TWOKINGS
+        if (pos.is_two_kings() && pos.count<KING>(Us) > 1)
+            weak =  attackedBy[Them][ALL_PIECES]
+                  & ~attackedBy2[Us]
+                  & (pos.attacks_from<KING>(ksq) | attackedBy[Us][QUEEN] | ~attackedBy[Us][ALL_PIECES]);
         else
 #endif
         weak =  attackedBy[Them][ALL_PIECES]
