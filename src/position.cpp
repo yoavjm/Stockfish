@@ -95,6 +95,24 @@ PieceType min_attacker<KING>(const Bitboard*, Square, Bitboard, Bitboard&, Bitbo
   return KING; // No need to update bitboards: it is the last cycle
 }
 
+#ifdef TWOKINGS
+PieceType two_kings_min_attacker(const Bitboard* bb, Square to, Bitboard stmAttackers,
+                                 Bitboard& occupied, Bitboard& attackers, Bitboard b) {
+
+  // If there is a pawn capture or opponent has no captures, skip commoner
+  if ((stmAttackers & bb[PAWN]) || !b)
+      return min_attacker<PAWN>(bb, to, stmAttackers, occupied, attackers);
+
+  occupied ^= b & ~(b - 1);
+
+  attackers |= attacks_bb<BISHOP>(to, occupied) & (bb[BISHOP] | bb[QUEEN]);
+  attackers |= attacks_bb<ROOK>(to, occupied) & (bb[ROOK] | bb[QUEEN]);
+
+  attackers &= occupied; // After X-ray that may add already processed pieces
+  return KING;
+}
+#endif
+
 } // namespace
 
 
@@ -1930,14 +1948,14 @@ bool Position::see_ge(Move m, Value threshold) const {
   PieceType nextVictim = type_of(piece_on(from));
   Color stm = ~color_of(piece_on(from)); // First consider opponent's move
 #endif
+  Value balance; // Values of the pieces taken by us minus opponent's ones
+  Bitboard occupied, stmAttackers;
+
 #ifdef EXTINCTION
   // Is it a winning capture?
   if (is_extinction() && piece_on(to) != NO_PIECE && !more_than_one(pieces(color_of(piece_on(to)), type_of(piece_on(to)))))
       return true;
 #endif
-  Value balance; // Values of the pieces taken by us minus opponent's ones
-  Bitboard occupied, stmAttackers;
-
 #ifdef ATOMIC
   if (is_atomic())
   {
@@ -1979,13 +1997,22 @@ bool Position::see_ge(Move m, Value threshold) const {
 
   // The opponent may be able to recapture so this is the best result
   // we can hope for.
-  balance = PieceValue[var][MG][piece_on(to)]- threshold;
+#ifdef TWOKINGS
+  if (is_two_kings() && nextVictim == KING && to != royal_king(stm, pieces(stm, KING) ^ from ^ to))
+      balance = PieceValue[CHESS_VARIANT][MG][piece_on(to)] - threshold;
+  else
+#endif
+  balance = PieceValue[var][MG][piece_on(to)] - threshold;
 
   if (balance < VALUE_ZERO)
       return false;
 
   // Now assume the worst possible result: that the opponent can
   // capture our piece for free.
+#ifdef TWOKINGS
+  if (is_two_kings() && nextVictim == KING && to != royal_king(stm, pieces(stm, KING) ^ from ^ to))
+      balance -= PieceValue[CHESS_VARIANT][MG][nextVictim];
+#endif
   balance -= PieceValue[var][MG][nextVictim];
 
   if (balance >= VALUE_ZERO) // Always true if nextVictim == KING
@@ -2037,11 +2064,32 @@ bool Position::see_ge(Move m, Value threshold) const {
           break;
 
       // Locate and remove the next least valuable attacker
+#ifdef TWOKINGS
+      Bitboard stmCommoners = 0;
+      if (is_two_kings() && more_than_one(byTypeBB[KING] & pieces(stm) & occupied))
+      {
+          // Consider commoner capture(s) prior to search termination
+          Bitboard stmKings = byTypeBB[KING] & stmAttackers;
+          while (stmKings)
+          {
+              Square king = pop_lsb(&stmKings);
+              Square royalKing = royal_king(stm, (byTypeBB[KING] & pieces(stm) & occupied) ^ king ^ to);
+              if (royalKing != to && !(attackers_to(royalKing, occupied ^ king) & pieces(~stm) & occupied))
+                  stmCommoners |= king;
+          }
+          nextVictim = two_kings_min_attacker(byTypeBB, to, stmAttackers, occupied, attackers, stmCommoners);
+      }
+      else
+#endif
       nextVictim = min_attacker<PAWN>(byTypeBB, to, stmAttackers, occupied, attackers);
 
       // Don't allow pinned pieces to attack pieces except the king
 #ifdef ANTI
       if (is_anti()) {} else
+#endif
+#ifdef TWOKINGS
+      // If the moved king is (or becomes) royal then give up
+      if (is_two_kings() && stmCommoners) {} else
 #endif
       if (nextVictim == KING)
       {
