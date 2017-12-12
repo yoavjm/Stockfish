@@ -31,7 +31,7 @@ namespace {
 
   // Polynomial material imbalance parameters
 
-  const int QuadraticOurs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
+  int QuadraticOurs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
     {
     //            OUR PIECES
     // pair pawn knight bishop rook queen
@@ -203,7 +203,7 @@ namespace {
   };
 #endif
 
-  const int QuadraticTheirs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
+  int QuadraticTheirs[VARIANT_NB][PIECE_TYPE_NB][PIECE_TYPE_NB] = {
     {
     //           THEIR PIECES
     // pair pawn knight bishop rook queen
@@ -374,6 +374,7 @@ namespace {
       {  78,    3,  46,    37,   -26,  -1 }  // Queen
   };
 #endif
+TUNE(QuadraticOurs[TWOKINGS_VARIANT], QuadraticTheirs[TWOKINGS_VARIANT]);
 
   // QueenMinorsImbalance[opp_minor_count] is applied when only one side has a queen.
   // It contains a bonus/malus for the side with the queen.
