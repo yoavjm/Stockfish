@@ -1448,12 +1448,12 @@ namespace {
             if (pos.is_two_kings())
             {
                 if (pos.count<KING>(Them) > 1)
-                    ebonus += distance(pos.commoner_king(Them), blockSq) * 5 * rr;
+                    bonus += make_score(0, distance(pos.commoner_king(Them), blockSq) * 5 * w);
                 if (pos.count<KING>(Us) > 1)
                 {
-                    ebonus += distance(pos.commoner_king(Us), blockSq) * 5 * rr;
+                    bonus += make_score(0, distance(pos.commoner_king(Us), blockSq) * 5 * w);
                     if (relative_rank(Us, blockSq) != RANK_8)
-                        ebonus -= distance(pos.commoner_king(Us), blockSq + Up) * rr;
+                        bonus -= make_score(0, distance(pos.commoner_king(Us), blockSq + Up) * w);
                 }
             }
 #endif
