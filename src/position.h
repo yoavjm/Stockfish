@@ -145,6 +145,9 @@ public:
   bool capture(Move m) const;
   bool capture_or_promotion(Move m) const;
   bool gives_check(Move m) const;
+#ifdef ATOMIC
+  bool gives_atomic_check(Move m) const;
+#endif
   bool advanced_pawn_push(Move m) const;
   Piece moved_piece(Move m) const;
   Piece captured_piece() const;

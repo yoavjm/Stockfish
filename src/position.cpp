@@ -1232,6 +1232,54 @@ bool Position::gives_check(Move m) const {
   }
 }
 
+#ifdef ATOMIC
+bool Position::gives_atomic_check(Move m) const {
+  Square ksq = square<KING>(~sideToMove);
+  Bitboard target =  pieces(~sideToMove)
+                   & (attacks_from<KING>(ksq) | ksq)
+                   & ~attacks_from<KING>(type_of(moved_piece(m)) == KING ? to_sq(m) : square<KING>(sideToMove));
+  Bitboard occupied = pieces() ^ from_sq(m) ^ to_sq(m);
+  Square from = from_sq(m);
+  Square to = to_sq(m);
+  PieceType pt = type_of(moved_piece(m));
+
+  if (capture(m))
+  {
+      Square capsq = type_of(m) == ENPASSANT ? make_square(file_of(to), rank_of(from)) : to;
+      Bitboard blast = attacks_from<KING>(to) & (pieces() ^ pieces(PAWN));
+
+      occupied = pieces() ^ ((blast | capsq) | from);
+      target &= occupied;
+  }
+  else switch (type_of(m))
+  {
+  case CASTLING:
+      if (attacks_bb<ROOK>(relative_square(sideToMove, to > from ? SQ_F1 : SQ_D1), occupied) & target)
+          return true;
+      break;
+
+  case PROMOTION:
+      if (attacks_from(promotion_type(m), to) & target)
+          return true;
+      break;
+
+  default:
+      if (pt == KING)
+          break;
+      if ((pt == PAWN ? attacks_from<PAWN>(to, sideToMove) : attacks_from(pt, to)) & target)
+          return true;
+  }
+  while (target)
+  {
+      Square s = pop_lsb(&target);
+
+      if ((pt == KING ? attackers_to(s, occupied) : slider_attackers_to(s, occupied)) & pieces(sideToMove) & occupied)
+          return true;
+  }
+  return false;
+}
+#endif
+
 /// Position::do_move() makes a move, and saves all information necessary
 /// to a StateInfo object. The move is assumed to be legal. Pseudo-legal
 /// moves should be filtered out before this function is called.
