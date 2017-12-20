@@ -1865,18 +1865,18 @@ Value Position::see<ATOMIC_VARIANT>(Move m) const {
 
   Square from = from_sq(m), to = to_sq(m);
   Color stm = color_of(piece_on(from));
-
-  Value blast_eval = VALUE_ZERO;
+  Value blastEval = VALUE_ZERO;
   Bitboard blast = attacks_from<KING>(to) & (pieces() ^ pieces(PAWN)) & ~SquareBB[from];
+
   if (blast & pieces(~stm,KING))
       return VALUE_MATE;
   for (Color c = WHITE; c <= BLACK; ++c)
       for (PieceType pt = KNIGHT; pt <= QUEEN; ++pt)
           if (c == stm)
-              blast_eval -= popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
+              blastEval -= popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
           else
-              blast_eval += popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
-  return blast_eval + PieceValue[var][MG][piece_on(to_sq(m))] - PieceValue[var][MG][moved_piece(m)];
+              blastEval += popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
+  return blastEval + PieceValue[var][MG][piece_on(to_sq(m))] - PieceValue[var][MG][moved_piece(m)];
 }
 #endif
 
@@ -1939,7 +1939,6 @@ bool Position::see_ge(Move m, Value threshold) const {
       {
           if (threshold > VALUE_ZERO)
               return false;
-
           occupied = pieces() ^ from;
           Bitboard b = attackers_to(to, occupied) & occupied & pieces(~stm) & ~pieces(KING);
 
@@ -1947,9 +1946,9 @@ bool Position::see_ge(Move m, Value threshold) const {
           while (b)
           {
               Square s = pop_lsb(&b);
-
-              Value blast_eval = VALUE_ZERO;
+              Value blastEval = VALUE_ZERO;
               Bitboard blast = attacks_from<KING>(to) & (pieces() ^ pieces(PAWN)) & ~SquareBB[from] & ~SquareBB[s];
+
               if (blast & pieces(~stm,KING))
                   continue;
               if (blast & pieces(stm,KING))
@@ -1957,10 +1956,10 @@ bool Position::see_ge(Move m, Value threshold) const {
               for (Color c = WHITE; c <= BLACK; ++c)
                   for (PieceType pt = KNIGHT; pt <= QUEEN; ++pt)
                       if (c == stm)
-                          blast_eval -= popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
+                          blastEval -= popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
                       else
-                          blast_eval += popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
-              if (blast_eval + PieceValue[var][MG][piece_on(s)] - PieceValue[var][MG][moved_piece(m)] < threshold)
+                          blastEval += popcount(blast & pieces(c,pt)) * PieceValue[var][MG][pt];
+              if (blastEval + PieceValue[var][MG][piece_on(s)] - PieceValue[var][MG][moved_piece(m)] < threshold)
                   return false;
           }
           return true;
