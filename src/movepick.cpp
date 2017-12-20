@@ -173,6 +173,11 @@ void MovePicker::score() {
 
       else // Type == EVASIONS
       {
+#ifdef ATOMIC
+          if (pos.is_atomic() && pos.capture(m))
+              m.value = pos.see<ATOMIC_VARIANT>(m);
+          else
+#endif
           if (pos.capture(m))
               m.value =  PieceValue[pos.variant()][MG][pos.piece_on(to_sq(m))]
                        - Value(type_of(pos.moved_piece(m)));
