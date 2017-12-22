@@ -1080,7 +1080,7 @@ namespace {
 #ifdef ATOMIC
         if (pos.is_atomic())
         {
-            kingDanger += IndirectKingAttack * popcount(pos.attacks_from<KING>(pos.square<KING>(Us)) & pos.pieces(Us) & attackedBy[Them][ALL_PIECES]);
+            kingDanger += IndirectKingAttack * popcount(attackedBy[Us][KING] & pos.pieces(Us) & attackedBy[Them][ALL_PIECES]);
             score -= make_score(100, 100) * popcount(attackedBy[Us][KING] & pos.pieces());
         }
 #endif
@@ -1193,6 +1193,14 @@ namespace {
 #ifdef ATOMIC
     if (pos.is_atomic())
     {
+        weak = pos.pieces(Them) & attackedBy[Us][ALL_PIECES] & ~attackedBy[Us][KING];
+
+        score += ThreatBySafePawn * popcount(attackedBy[Us][PAWN] & weak);
+
+        for (b = weak; b; )
+            score += ThreatByRank * (int)relative_rank(Us, pop_lsb(&b));
+
+        score += ThreatByAttackOnQueen * popcount(pos.pieces(Them, QUEEN) & weak);
     }
     else
 #endif
