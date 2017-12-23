@@ -1525,6 +1525,12 @@ namespace {
                    & ~pos.pieces(Us, PAWN)
                    & ~attackedBy[Them][PAWN]
                    & (attackedBy[Us][ALL_PIECES] | ~attackedBy[Them][ALL_PIECES]);
+#ifdef ATOMIC
+    if (pos.is_atomic())
+        safe =   SpaceMask
+              & ~pos.pieces(Us, PAWN)
+              & ~attackedBy[Them][PAWN];
+#endif
 
     // Find all squares which are at most three squares behind some friendly pawn
     Bitboard behind = pos.pieces(Us, PAWN);
