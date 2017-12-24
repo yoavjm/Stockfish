@@ -1196,10 +1196,6 @@ namespace {
         weak = pos.pieces(Them) & attackedBy[Us][ALL_PIECES] & ~attackedBy[Us][KING];
 
         score += ThreatBySafePawn * popcount(attackedBy[Us][PAWN] & weak);
-
-        for (b = weak; b; )
-            score += ThreatByRank * (int)relative_rank(Us, pop_lsb(&b));
-
         score += ThreatByAttackOnQueen * popcount(pos.pieces(Them, QUEEN) & weak);
     }
     else
