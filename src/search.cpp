@@ -653,6 +653,9 @@ void Thread::search() {
 
               assert(alpha >= -VALUE_INFINITE && beta <= VALUE_INFINITE);
           }
+#ifdef HELPMATE
+          if (rootPos.is_helpmate()) bestValue = -bestValue;
+#endif
 
           // Sort the PV lines searched so far and update the GUI
           std::stable_sort(rootMoves.begin(), rootMoves.begin() + PVIdx + 1);
