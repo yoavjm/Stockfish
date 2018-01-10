@@ -1924,14 +1924,17 @@ bool Position::see_ge(Move m, Value threshold) const {
 
   assert(is_ok(m));
 #ifdef CRAZYHOUSE
-  if (is_house() && color_of(moved_piece(m)) == sideToMove)
+  if (is_house())
   {
-      // Reduce threshold based on remaining material in hand
-      if (gives_check(m))
-          threshold -= material_in_hand(sideToMove) / 5;
-      // Increase threshold based on remaining material in hand
-      if (checkers())
-          threshold += material_in_hand(~sideToMove) / 5;
+      if (color_of(moved_piece(m)) == sideToMove)
+      {
+          // Reduce threshold based on remaining material in hand
+          if (gives_check(m))
+              threshold -= material_in_hand(sideToMove, m) / 5;
+          // Increase threshold based on remaining material in hand
+          if (checkers())
+              threshold += material_in_hand(~sideToMove, m) / 5;
+      }
       // Crazyhouse captures double in value (threshold is halved)
       threshold /= 2;
   }
