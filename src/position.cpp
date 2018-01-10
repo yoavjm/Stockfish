@@ -1930,7 +1930,7 @@ bool Position::see_ge(Move m, Value threshold) const {
       {
           // Reduce threshold based on remaining material in hand
           if (gives_check(m))
-              threshold -= material_in_hand(sideToMove, m) / 5;
+              threshold -= (type_of(m) == DROP ? material_in_hand(sideToMove, m) : material_in_hand(sideToMove)) / 5;
           // Increase threshold based on remaining material in hand
           if (checkers())
               threshold += material_in_hand(~sideToMove, m) / 5;

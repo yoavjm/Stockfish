@@ -816,10 +816,7 @@ inline Value Position::material_in_hand(Color c, Move m) const {
       if (type_of(m) == DROP)
           v -= PieceValue[var][MG][type_of(dropped_piece(m))];
       if (capture(m))
-      {
-          Square to = to_sq(m);
-          v += PieceValue[var][MG][type_of(m) == ENPASSANT || is_promoted(to) ? PAWN : type_of(piece_on(to))];
-      }
+          v += PieceValue[var][MG][type_of(m) == ENPASSANT || is_promoted(to_sq(m)) ? PAWN : type_of(piece_on(to_sq(m)))];
   }
   return v;
 }
