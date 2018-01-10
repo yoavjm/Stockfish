@@ -149,6 +149,18 @@ void MovePicker::score() {
                   m.value += (1 << 27);
           }
 #endif
+#ifdef CRAZYHOUSE
+          if (pos.is_house() && pos.count_in_hand<ALL_PIECES>(pos.side_to_move(), m))
+          {
+              PieceType pt = type_of(m) == PROMOTION ? promotion_type(m) : type_of(pos.moved_piece(m));
+              Bitboard attacks = pt == PAWN ? pos.attacks_from<PAWN>(to_sq(m), pos.side_to_move()) : pos.attacks_from(pt, to_sq(m));
+              for (Color c = WHITE; c <= BLACK; ++c)
+              {
+                  Bitboard target = pos.attacks_from<KING>(pos.square<KING>(c)) | pos.square<KING>(c);
+                  m.value += popcount(attacks & target) * pos.material_in_hand(pos.side_to_move(), m) / 4;
+              }
+          }
+#endif
       }
 
       else // Type == EVASIONS

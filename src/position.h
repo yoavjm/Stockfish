@@ -192,8 +192,8 @@ public:
 #endif
 #ifdef CRAZYHOUSE
   bool is_house() const;
-  template<PieceType Pt> int count_in_hand(Color c) const;
-  Value material_in_hand(Color c) const;
+  template<PieceType Pt> int count_in_hand(Color c, Move m = MOVE_NONE) const;
+  Value material_in_hand(Color c, Move m = MOVE_NONE) const;
   void add_to_hand(Color c, PieceType pt);
   void remove_from_hand(Color c, PieceType pt);
   bool is_promoted(Square s) const;
@@ -796,14 +796,31 @@ inline bool Position::is_house() const {
   return var == CRAZYHOUSE_VARIANT;
 }
 
-template<PieceType Pt> inline int Position::count_in_hand(Color c) const {
+template<PieceType Pt> inline int Position::count_in_hand(Color c, Move m) const {
+  if (m != MOVE_NONE && c == color_of(moved_piece(m)))
+  {
+      if (type_of(m) == DROP && (Pt == ALL_PIECES || Pt == type_of(dropped_piece(m))))
+          return pieceCountInHand[c][Pt] - 1;
+      if (capture(m) && (Pt == ALL_PIECES || Pt == (type_of(m) == ENPASSANT || is_promoted(to_sq(m)) ? PAWN : type_of(piece_on(to_sq(m))))))
+          return pieceCountInHand[c][Pt] + 1;
+  }
   return pieceCountInHand[c][Pt];
 }
 
-inline Value Position::material_in_hand(Color c) const {
+inline Value Position::material_in_hand(Color c, Move m) const {
   Value v = VALUE_ZERO;
   for (PieceType pt = PAWN; pt <= QUEEN; ++pt)
       v += pieceCountInHand[c][pt] * PieceValue[var][MG][pt];
+  if (m != MOVE_NONE && c == color_of(moved_piece(m)))
+  {
+      if (type_of(m) == DROP)
+          v -= PieceValue[var][MG][type_of(dropped_piece(m))];
+      if (capture(m))
+      {
+          Square to = to_sq(m);
+          v += PieceValue[var][MG][type_of(m) == ENPASSANT || is_promoted(to) ? PAWN : type_of(piece_on(to))];
+      }
+  }
   return v;
 }
 
