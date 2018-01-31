@@ -611,9 +611,6 @@ namespace {
         }
 
         // Score this pawn
-#ifdef HORDE
-        if (pos.is_horde() && relative_rank(Us, s) == RANK_1) {} else
-#endif
         if (supported | phalanx)
             score += Connected[pos.variant()][opposed][bool(phalanx)][popcount(supported)][relative_rank(Us, s)];
 
@@ -650,7 +647,7 @@ void init() {
     { 0, 8, 19, 13, 71, 94, 169, 324 },
 #endif
 #ifdef ATOMIC
-    { 0,18, 11, 14, 82,109, 170, 315 },
+    { 0, 18, 11, 14, 82, 109, 170, 315 },
 #endif
 #ifdef CRAZYHOUSE
     { 0, 8, 19, 13, 71, 94, 169, 324 },
@@ -662,7 +659,7 @@ void init() {
     { 0, 13, 24, 18, 76, 100, 175, 330 },
 #endif
 #ifdef HORDE
-    { 37, 29, 3, 1, 105,  99, 343, 350 },
+    { 29, 29, 3, 1, 105, 99, 343, 350 },
 #endif
 #ifdef KOTH
     { 0, 8, 19, 13, 71, 94, 169, 324 },
@@ -688,7 +685,7 @@ void init() {
   for (int opposed = 0; opposed <= 1; ++opposed)
       for (int phalanx = 0; phalanx <= 1; ++phalanx)
           for (int support = 0; support <= 2; ++support)
-              for (Rank r = RANK_2; r < RANK_8; ++r)
+              for (Rank r = RANK_1; r < RANK_8; ++r)
   {
       int v = 17 * support;
       v += (Seed[var][r] + (phalanx ? (Seed[var][r + 1] - Seed[var][r]) / 2 : 0)) >> opposed;
