@@ -1629,11 +1629,16 @@ namespace {
     if (pos.is_atomic())
     {
         // Endgame with one bishop and no other pieces (ignoring pawns)
-        // is a fortress draw if none of the weaker side's pawns are on the bishop's color.
-        if (    pos.non_pawn_material(strongSide) == BishopValueMg
-            && !pe->pawn_asymmetry()
-            && !pe->pawns_on_same_color_squares(~strongSide, pos.square<BISHOP>(strongSide)))
-            return SCALE_FACTOR_DRAW;
+        // is a fortress draw if none of the weaker side's pawns can be captured.
+        if (pos.non_pawn_material(strongSide) == BishopValueMg)
+        {
+            if (   !pe->pawn_asymmetry()
+                && !pe->pawns_on_same_color_squares(~strongSide, pos.square<BISHOP>(strongSide)))
+                return SCALE_FACTOR_DRAW;
+
+            if (! ((0xFF ^ pe->semiopen_files(strongSide)) & pe->semiopen_files(~strongSide)))
+                sf = ScaleFactor(8); // Possible fortress
+        }
     }
     else
 #endif

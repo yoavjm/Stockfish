@@ -44,6 +44,9 @@ struct Entry {
   int semiopen_file(Color c, File f) const {
     return semiopenFiles[c] & (1 << f);
   }
+#ifdef ATOMIC
+  int semiopen_files(Color c) const { return semiopenFiles[c]; }
+#endif
 
   int semiopen_side(Color c, File f, bool leftSide) const {
     return semiopenFiles[c] & (leftSide ? (1 << f) - 1 : ~((1 << (f + 1)) - 1));
