@@ -259,10 +259,6 @@ namespace {
   void update_capture_stats(const Position& pos, Move move, Move* captures, int captureCnt, int bonus);
 
   inline bool gives_check(const Position& pos, Move move) {
-#ifdef HELPMATE
-    if (pos.is_helpmate())
-        return false;
-#endif
     Color us = pos.side_to_move();
     return  type_of(move) == NORMAL && !(pos.blockers_for_king(~us) & pos.pieces(us))
 #ifdef ATOMIC
@@ -270,6 +266,9 @@ namespace {
 #endif
 #ifdef GRID
           && !pos.is_grid()
+#endif
+#ifdef HELPMATE
+          && !pos.is_helpmate()
 #endif
           ? pos.check_squares(type_of(pos.moved_piece(move))) & to_sq(move)
           : pos.gives_check(move);
@@ -1009,6 +1008,9 @@ namespace {
 #ifdef EXTINCTION
     if (pos.is_extinction()) {} else
 #endif
+#ifdef HELPMATE
+    if (pos.is_helpmate()) {} else
+#endif
     if (   !rootNode
         &&  depth < 7 * ONE_PLY
         &&  eval - futility_margin(pos.variant(), depth, improving) >= beta
@@ -1682,6 +1684,9 @@ moves_loop: // When in check, search starts from here
 #endif
 #ifdef RACE
           && !(pos.is_race() && type_of(pos.piece_on(from_sq(move))) == KING && rank_of(to_sq(move)) == RANK_8)
+#endif
+#ifdef HELPMATE
+          && !pos.is_helpmate()
 #endif
           &&  futilityBase > -VALUE_KNOWN_WIN
           && !pos.advanced_pawn_push(move))
