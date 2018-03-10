@@ -659,7 +659,7 @@ void init() {
     { 0, 13, 24, 18, 76, 100, 175, 330 },
 #endif
 #ifdef HORDE
-    { 29, 29, 3, 1, 105, 99, 343, 350 },
+    { 37, 29, 3, 1, 105, 99, 343, 350 },
 #endif
 #ifdef KOTH
     { 0, 8, 19, 13, 71, 94, 169, 324 },
@@ -685,7 +685,11 @@ void init() {
   for (int opposed = 0; opposed <= 1; ++opposed)
       for (int phalanx = 0; phalanx <= 1; ++phalanx)
           for (int support = 0; support <= 2; ++support)
-              for (Rank r = RANK_1; r < RANK_8; ++r)
+#ifdef HORDE
+              for (Rank r = (var == HORDE_VARIANT ? RANK_1 : RANK_2); r < RANK_8; ++r)
+#else
+              for (Rank r = RANK_2; r < RANK_8; ++r)
+#endif
   {
       int v = 17 * support;
       v += (Seed[var][r] + (phalanx ? (Seed[var][r + 1] - Seed[var][r]) / 2 : 0)) >> opposed;
