@@ -1365,7 +1365,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
       else
       {
 #ifdef TWOKINGS
-          if (is_two_kings() && type_of(captured) == KING)
+          if (is_two_kings() && type_of(captured) == KING && to != royal_king(them))
               st->nonPawnMaterial[them] -= PieceValue[TWOKINGS_VARIANT][MG][captured];
           else
 #endif

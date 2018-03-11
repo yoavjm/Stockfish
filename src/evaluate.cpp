@@ -741,8 +741,13 @@ namespace {
 #endif
     attackedBy[Us][KING] = pos.attacks_from<KING>(pos.square<KING>(Us));
 #ifdef TWOKINGS
-    if (pos.is_two_kings() && pos.count<KING>(Us) > 1)
-        attackedBy[Us][KING] |= pos.attacks_from<KING>(pos.commoner_king(Us));
+    if (pos.is_two_kings() && more_than_one(pos.pieces(Us, KING)))
+    {
+        const Square* kl = pos.squares<KING>(Us);
+        Square ksq;
+        while ((ksq = *kl++) != SQ_NONE)
+            attackedBy[Us][KING] |= pos.attacks_from<KING>(ksq);
+    }
 #endif
     attackedBy[Us][PAWN] = pe->pawn_attacks(Us);
     attackedBy[Us][ALL_PIECES] = attackedBy[Us][KING] | attackedBy[Us][PAWN];
@@ -1447,13 +1452,22 @@ namespace {
 #ifdef TWOKINGS
             if (pos.is_two_kings())
             {
-                if (pos.count<KING>(Them) > 1)
-                    bonus += make_score(0, distance(pos.commoner_king(Them), blockSq) * 5 * w);
-                if (pos.count<KING>(Us) > 1)
+                const Square* kl = pos.squares<KING>(Them);
+                Square ksq;
+                while ((ksq = *kl++) != SQ_NONE)
                 {
-                    bonus += make_score(0, distance(pos.commoner_king(Us), blockSq) * 5 * w);
+                    if (ksq == pos.royal_king(Them))
+                        continue;
+                    bonus += make_score(0, distance(ksq, blockSq) * 5 * w);
+                }
+                kl = pos.squares<KING>(Us);
+                while ((ksq = *kl++) != SQ_NONE)
+                {
+                    if (ksq == pos.royal_king(Us))
+                        continue;
+                    bonus += make_score(0, distance(ksq, blockSq) * 5 * w);
                     if (relative_rank(Us, blockSq) != RANK_8)
-                        bonus -= make_score(0, distance(pos.commoner_king(Us), blockSq + Up) * w);
+                        bonus -= make_score(0, distance(ksq, blockSq + Up) * w);
                 }
             }
 #endif
