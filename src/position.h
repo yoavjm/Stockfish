@@ -192,7 +192,7 @@ public:
 #endif
 #ifdef CRAZYHOUSE
   bool is_house() const;
-  template<PieceType Pt> int count_in_hand(Color c, Move m = MOVE_NONE) const;
+  template<PieceType Pt> int count_in_hand(Color c) const;
   Value material_in_hand(Color c, Move m = MOVE_NONE) const;
   void add_to_hand(Color c, PieceType pt);
   void remove_from_hand(Color c, PieceType pt);
@@ -796,14 +796,7 @@ inline bool Position::is_house() const {
   return var == CRAZYHOUSE_VARIANT;
 }
 
-template<PieceType Pt> inline int Position::count_in_hand(Color c, Move m) const {
-  if (m != MOVE_NONE && c == color_of(moved_piece(m)))
-  {
-      if (type_of(m) == DROP && (Pt == ALL_PIECES || Pt == type_of(dropped_piece(m))))
-          return pieceCountInHand[c][Pt] - 1;
-      if (capture(m) && (Pt == ALL_PIECES || Pt == (type_of(m) == ENPASSANT || is_promoted(to_sq(m)) ? PAWN : type_of(piece_on(to_sq(m))))))
-          return pieceCountInHand[c][Pt] + 1;
-  }
+template<PieceType Pt> inline int Position::count_in_hand(Color c) const {
   return pieceCountInHand[c][Pt];
 }
 
