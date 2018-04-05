@@ -1046,7 +1046,7 @@ inline Value Position::stalemate_value(int ply, Value drawValue) const {
 }
 
 inline bool Position::capture_or_promotion(Move m) const {
-  assert(is_ok(m));
+  assert(is_ok(var, m));
 #ifdef RACE
   if (is_race())
   {
@@ -1062,7 +1062,7 @@ inline bool Position::capture_or_promotion(Move m) const {
 }
 
 inline bool Position::capture(Move m) const {
-  assert(is_ok(m));
+  assert(is_ok(var, m));
   // Castling is encoded as "king captures rook"
   return (!empty(to_sq(m)) && type_of(m) != CASTLING) || type_of(m) == ENPASSANT;
 }

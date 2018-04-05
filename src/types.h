@@ -742,8 +742,19 @@ constexpr Piece dropped_piece(Move m) {
 }
 #endif
 
+template<Variant V>
 inline bool is_ok(Move m) {
+#ifdef CRAZYHOUSE
+  return (V == CRAZYHOUSE_VARIANT || type_of(m) != DROP) && from_sq(m) != to_sq(m);
+#endif
   return from_sq(m) != to_sq(m); // Catch MOVE_NULL and MOVE_NONE
+}
+
+inline bool is_ok(Variant variant, Move m) {
+#ifdef CRAZYHOUSE
+  return variant == CRAZYHOUSE_VARIANT ? is_ok<CRAZYHOUSE_VARIANT>(m) : is_ok<CHESS_VARIANT>(m);
+#endif
+  return is_ok<CHESS_VARIANT>(m);
 }
 
 inline Variant main_variant(Variant v) {
