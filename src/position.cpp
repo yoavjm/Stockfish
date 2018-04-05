@@ -834,7 +834,10 @@ Bitboard Position::slider_attackers_to(Square s, Bitboard occupied) const {
 
 bool Position::legal(Move m) const {
 
-  assert(is_ok(m));
+  assert(is_ok(variant(), m));
+#ifdef CRAZYHOUSE
+  assert(is_house() || type_of(m) != DROP);
+#endif
 
   Color us = sideToMove;
   Square from = from_sq(m);
@@ -987,6 +990,12 @@ bool Position::legal(Move m) const {
 
 bool Position::pseudo_legal(const Move m) const {
 
+#ifdef CRAZYHOUSE
+  // Return early for DROP moves if not playing crazyhouse
+  if (!is_house() && type_of(m) == DROP)
+      return false;
+#endif
+
   Color us = sideToMove;
   Square from = from_sq(m);
   Square to = to_sq(m);
@@ -1137,7 +1146,7 @@ bool Position::pseudo_legal(const Move m) const {
 
 bool Position::gives_check(Move m) const {
 
-  assert(is_ok(m));
+  assert(is_ok(variant(), m));
   assert(color_of(moved_piece(m)) == sideToMove);
 
   Square from = from_sq(m);
@@ -1269,7 +1278,7 @@ bool Position::gives_check(Move m) const {
 
 void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
 
-  assert(is_ok(m));
+  assert(is_ok(variant(), m));
   assert(&newSt != st);
 #ifdef ANTI
   assert(!is_anti() || !givesCheck);
@@ -1638,7 +1647,7 @@ void Position::do_move(Move m, StateInfo& newSt, bool givesCheck) {
 
 void Position::undo_move(Move m) {
 
-  assert(is_ok(m));
+  assert(is_ok(variant(), m));
 
   sideToMove = ~sideToMove;
 
@@ -1892,7 +1901,7 @@ Key Position::key_after(Move m) const {
 #ifdef ATOMIC
 template<>
 Value Position::see<ATOMIC_VARIANT>(Move m, PieceType nextVictim, Square s) const {
-  assert(is_ok(m));
+  assert(is_ok(ATOMIC_VARIANT, m));
 
   Square from = from_sq(m);
   Color us = color_of(piece_on(from));
@@ -1922,7 +1931,7 @@ Value Position::see<ATOMIC_VARIANT>(Move m, PieceType nextVictim, Square s) cons
 
 bool Position::see_ge(Move m, Value threshold) const {
 
-  assert(is_ok(m));
+  assert(is_ok(variant(), m));
 #ifdef CRAZYHOUSE
   if (is_house() && color_of(moved_piece(m)) == sideToMove)
   {

@@ -1046,7 +1046,12 @@ inline Value Position::stalemate_value(int ply, Value drawValue) const {
 }
 
 inline bool Position::capture_or_promotion(Move m) const {
-  assert(is_ok(m));
+#ifdef CRAZYHOUSE
+  // This function does not return early for DROP moves
+  assert(is_ok<CRAZYHOUSE_VARIANT>(m));
+#else
+  assert(is_ok<CHESS_VARIANT>(m));
+#endif
 #ifdef RACE
   if (is_race())
   {
@@ -1062,7 +1067,12 @@ inline bool Position::capture_or_promotion(Move m) const {
 }
 
 inline bool Position::capture(Move m) const {
-  assert(is_ok(m));
+#ifdef CRAZYHOUSE
+  // This function does not return early for DROP moves
+  assert(is_ok<CRAZYHOUSE_VARIANT>(m));
+#else
+  assert(is_ok<CHESS_VARIANT>(m));
+#endif
   // Castling is encoded as "king captures rook"
   return (!empty(to_sq(m)) && type_of(m) != CASTLING) || type_of(m) == ENPASSANT;
 }
