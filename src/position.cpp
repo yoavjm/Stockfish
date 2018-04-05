@@ -990,6 +990,12 @@ bool Position::legal(Move m) const {
 
 bool Position::pseudo_legal(const Move m) const {
 
+#ifdef CRAZYHOUSE
+  // Return early for DROP moves if not playing crazyhouse
+  if (!is_house() && type_of(m) == DROP)
+      return false;
+#endif
+
   Color us = sideToMove;
   Square from = from_sq(m);
   Square to = to_sq(m);
