@@ -835,6 +835,9 @@ Bitboard Position::slider_attackers_to(Square s, Bitboard occupied) const {
 bool Position::legal(Move m) const {
 
   assert(is_ok(m));
+#ifdef CRAZYHOUSE
+  assert(is_house() || type_of(m) != DROP);
+#endif
 
   Color us = sideToMove;
   Square from = from_sq(m);
@@ -986,6 +989,10 @@ bool Position::legal(Move m) const {
 /// due to SMP concurrent access or hash position key aliasing.
 
 bool Position::pseudo_legal(const Move m) const {
+
+#ifdef CRAZYHOUSE
+  assert(is_house() || type_of(m) != DROP);
+#endif
 
   Color us = sideToMove;
   Square from = from_sq(m);
