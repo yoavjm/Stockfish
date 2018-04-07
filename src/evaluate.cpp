@@ -1128,6 +1128,8 @@ namespace {
 #ifdef ANTI
     if (pos.is_anti())
     {
+        nonPawnEnemies = 0;
+        stronglyProtected = 0;
         const Bitboard TRank2BB = (Us == WHITE ? Rank2BB    : Rank7BB);
         bool weCapture = attackedBy[Us][ALL_PIECES] & pos.pieces(Them);
         bool theyCapture = attackedBy[Them][ALL_PIECES] & pos.pieces(Us);
@@ -1161,15 +1163,16 @@ namespace {
             score += ThreatsAnti[0] * popcount(attackedBy[Them][ALL_PIECES] & (pawnPushes | pieceMoves));
             score += ThreatsAnti[1] * popcount(attackedBy[Them][ALL_PIECES] & (unprotectedPawnPushes | unprotectedPieceMoves));
         }
-        nonPawnEnemies = 0;
-        stronglyProtected = 0;
     }
     else
 #endif
 #ifdef ATOMIC
     if (pos.is_atomic())
     {
+        nonPawnEnemies = pos.pieces(Them) ^ pos.pieces(Them, PAWN);
+        stronglyProtected = 0;
         Bitboard attacks = pos.pieces(Them) & attackedBy[Us][ALL_PIECES] & ~attackedBy[Us][KING];
+
         while (attacks)
         {
             Square s = pop_lsb(&attacks);
@@ -1181,14 +1184,14 @@ namespace {
                 count--;
             score += std::max(SCORE_ZERO, ThreatByBlast * count);
         }
-        nonPawnEnemies = 0;
-        stronglyProtected = 0;
     }
     else
 #endif
 #ifdef LOSERS
     if (pos.is_losers())
     {
+        nonPawnEnemies = 0;
+        stronglyProtected = 0;
         const Bitboard TRank2BB = (Us == WHITE ? Rank2BB    : Rank7BB);
         bool weCapture = attackedBy[Us][ALL_PIECES] & pos.pieces(Them);
         bool theyCapture = attackedBy[Them][ALL_PIECES] & pos.pieces(Us);
@@ -1219,8 +1222,6 @@ namespace {
             score += ThreatsLosers[0] * popcount(attackedBy[Them][ALL_PIECES] & (pawnPushes | pieceMoves));
             score += ThreatsLosers[1] * popcount(attackedBy[Them][ALL_PIECES] & (unprotectedPawnPushes | unprotectedPieceMoves));
         }
-        nonPawnEnemies = 0;
-        stronglyProtected = 0;
     }
     else
 #endif
