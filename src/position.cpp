@@ -855,6 +855,10 @@ bool Position::legal(Move m) const {
   if (is_extinction())
       return true;
 #endif
+#if defined(ANTI) || defined(EXTINCTION)
+  // King promotions are only legal in antichess and extinction variants
+  assert(type_of(m) != KING_PROMOTION);
+#endif
 #ifdef GRID
   // For simplicity, we only check here that moves cross grid lines
   if (is_grid() && (grid_bb(from) & to_sq(m)))
@@ -990,6 +994,20 @@ bool Position::legal(Move m) const {
 
 bool Position::pseudo_legal(const Move m) const {
 
+#if defined(ANTI) || defined(EXTINCTION)
+  switch (variant())
+  {
+#ifdef ANTI
+  case ANTI_VARIANT: break;
+#endif
+#ifdef EXTINCTION
+  case EXTINCTION_VARIANT: break;
+#endif
+  default: // Early return on TT move which does not apply for this variant
+  if (type_of(m) == KING_PROMOTION)
+      return false;
+  }
+#endif
 #ifdef CRAZYHOUSE
   // Early return on TT move which does not apply for this variant
   if (!is_house() && type_of(m) == DROP)
