@@ -969,6 +969,10 @@ namespace {
     if (pos.is_anti() && pos.can_capture())
         goto moves_loop;
 #endif
+#ifdef CRAZYHOUSE
+    if (pos.is_house() && (pos.pieces(pos.side_to_move(), PAWN) & (pos.side_to_move() == WHITE ? Rank7BB : Rank2BB)))
+        goto moves_loop;
+#endif
 #ifdef LOSERS
     if (pos.is_losers() && pos.can_capture_losers())
         goto moves_loop;
